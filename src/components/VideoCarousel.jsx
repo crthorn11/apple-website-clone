@@ -22,6 +22,12 @@ const VideoCarousel = () => {
     const { isEnd, isLastVideo, startPlay, videoId, isPlaying } = video;
 
     useGSAP(() => {
+        gsap.to('#slider', {
+            transform: `translateX(${-100 * videoId}%)`,
+            duration: 2,
+            ease: 'power2.inOut'
+        })
+
         gsap.to('#video', {
             scrollTrigger: {
             trigger: '#video',
@@ -51,21 +57,63 @@ const VideoCarousel = () => {
     ((pre) => [...pre, e])
  
     useEffect(() => {
-        const currentProgress = 0;
+        let currentProgress = 0;
         let span = videoSpanRef.current;
 
         if (span[videoId]) {
-            // animate the progress of video
+         // animate progress of video   
             let anim = gsap.to(span[videoId], {
                 onUpdate: () => {
-                    // Animation update logic
+                    const progress = Math.ceil(anim.progress() * 100);
+
+                    if(progress !=currentProgress) {
+                        currentProgress = progress;
+
+
+                        gsap.to(videoDivRef.current[videoId], {
+                            width: window.innerWidth < 760
+                            ? '10vw'
+                            : window.innerWidth < 1200
+                            ? '10vw'
+                            : '4vw'
+                        })
+
+
+                        gsap.to(span[videoId], {
+                            width: `${currentProgress}%`,
+                            backgroundColor: 'white'
+                        })
+                    }
                 },
+
                 onComplete: () => {
-                    // Animation complete logic
-                },
-            });
+                    if(isPlaying) {
+                        gsap.to(videoDivRef.current[videoId], {
+                            width: '12px'
+                        })
+                        gsap.to(span[videoId], {
+                            backgroundColor: '#afafaf'
+                        })
+                    }
+                }
+            })
+
+            if(videoId === 0) {
+                anim.restart();
+            }
+
+            const animUpdate = () => {
+                anim.progress(videoRef.current[videoId].currentTime /
+                    hightlightsSlides[videoId].videoDuration)
+            }
+    
+            if(isPlaying) {
+                gsap.ticker.add(animUpdate)
+            } else {
+                gsap.ticker.remove(animUpdate)
+            }
         }
-    }, [videoId, startPlay]);
+    }, [videoId, startPlay])
 
     const handleProcess = (type, i) => {
         switch (type) {
@@ -81,7 +129,10 @@ const VideoCarousel = () => {
                 setVideo((pre) => ({ ...pre, isLastVideo:
                     false, videoId: 0 }))
                     break;
-                        case 'play' :
+            case 'play' :
+                setVideo((pre) => ({ ...pre, isPlaying: !pre.isPlaying }))
+                    break;
+            case 'pause' :
                 setVideo((pre) => ({ ...pre, isPlaying: !pre.isPlaying }))
                     break;
                     default:
@@ -102,6 +153,11 @@ const VideoCarousel = () => {
                                     preload='auto'
                                     muted
                                     ref={(el) => (videoRef.current[i] = el)}
+                                    onEnded={() => 
+                                        i !== 3 
+                                        ? handleProcess('video-end', i)
+                                        : handleProcess('videp-last')
+                                    }
                                     onPlay={() => {
                                         setVideo((prevVideo) => ({
                                             ...prevVideo, isPlaying: true
