@@ -100,6 +100,7 @@ const VideoCarousel = () => {
 
             if(videoId === 0) {
                 anim.restart();
+                //utility given by gsap to restart animation
             }
 
             const animUpdate = () => {
@@ -109,6 +110,7 @@ const VideoCarousel = () => {
     
             if(isPlaying) {
                 gsap.ticker.add(animUpdate)
+                //ticker is used to update the progress bar
             } else {
                 gsap.ticker.remove(animUpdate)
             }
